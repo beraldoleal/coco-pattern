@@ -1,0 +1,52 @@
+# Minimal CoCo install: essential confidential computing components only
+
+main:
+  clusterGroupName: minimal
+clusterGroup:
+  name: minimal
+  isHubCluster: true
+  namespaces:
+    - openshift-sandboxed-containers-operator
+    - trustee-operator-system
+    - hello-openshift
+    - kbs-access
+  subscriptions:
+    # Only CoCo-specific operators
+    sandbox:
+      name: sandboxed-containers-operator
+      namespace: openshift-sandboxed-containers-operator
+      source: redhat-operators
+      channel: stable
+      installPlanApproval: Manual
+      csv: sandboxed-containers-operator.v1.10.1
+    trustee:
+      name: trustee-operator
+      namespace: trustee-operator-system
+      source: redhat-operators
+      channel: stable
+      installPlanApproval: Manual
+      csv: trustee-operator.v0.4.1
+  projects:
+    - trustee
+    - sandbox
+    - workloads
+    - default
+  sharedValueFiles:
+    - '/overrides/values-{{ $.Values.global.clusterPlatform }}.yaml'
+  applications:
+    # Only CoCo-specific applications
+    trustee:
+      name: trustee
+      namespace: trustee-operator-system
+      project: trustee
+      path: charts/hub/trustee
+    sandbox:
+      name: sandbox
+      namespace: openshift-sandboxed-containers-operator
+      project: sandbox
+      path: charts/coco-supported/sandbox
+    hello-openshift:
+      name: hello-openshift
+      namespace: hello-openshift
+      project: workloads
+      path: charts/coco-supported/hello-openshift
