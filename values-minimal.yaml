@@ -6,11 +6,17 @@ clusterGroup:
   name: minimal
   isHubCluster: true
   namespaces:
+    - open-cluster-management
     - openshift-sandboxed-containers-operator
     - trustee-operator-system
     - hello-openshift
     - kbs-access
   subscriptions:
+    # ACM for policy management
+    acm:
+      name: advanced-cluster-management
+      namespace: open-cluster-management
+      channel: release-2.13
     # Only CoCo-specific operators
     sandbox:
       name: sandboxed-containers-operator
@@ -27,6 +33,7 @@ clusterGroup:
       installPlanApproval: Manual
       csv: trustee-operator.v0.4.1
   projects:
+    - acm
     - trustee
     - sandbox
     - workloads
@@ -34,6 +41,13 @@ clusterGroup:
   sharedValueFiles:
     - '/overrides/values-{{ $.Values.global.clusterPlatform }}.yaml'
   applications:
+    # ACM for policy management
+    acm:
+      name: acm
+      namespace: open-cluster-management
+      project: acm
+      chart: acm
+      chartVersion: 0.1.*
     # Only CoCo-specific applications
     trustee:
       name: trustee
