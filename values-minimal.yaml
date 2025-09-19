@@ -64,3 +64,9 @@ clusterGroup:
       namespace: hello-openshift
       project: workloads
       path: charts/coco-supported/hello-openshift
+  imperative:
+    jobs:
+      - name: init-data-gzipper
+        playbook: ansible/init-data-gzipper.yaml
+        verbosity: -vvv
+        timeout: 3600
