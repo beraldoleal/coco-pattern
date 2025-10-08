@@ -1,0 +1,252 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-agent-coco
+  namespace: zero-trust-workload-identity-manager
+data:
+  agent.conf: |
+    {
+      "agent": {
+        "data_dir": "/var/lib/spire",
+        "log_level": "debug",
+        "retry_bootstrap": true,
+        "server_address": "spire-server.zero-trust-workload-identity-manager",
+        "server_port": "443",
+        "socket_path": "/tmp/spire-agent/public/spire-agent.sock",
+        "trust_bundle_path": "/run/spire/bundle/bundle.crt",
+        "trust_domain": "apps.bleal-ztvp.azure.sandboxedcontainers.com"
+      },
+      "health_checks": {
+        "bind_address": "0.0.0.0",
+        "bind_port": 9982,
+        "listener_enabled": true,
+        "live_path": "/live",
+        "ready_path": "/ready"
+      },
+      "plugins": {
+        "KeyManager": [
+          {
+            "disk": {
+              "plugin_data": {
+                "directory": "/var/lib/spire"
+              }
+            }
+          }
+        ],
+        "NodeAttestor": [
+          {
+            "x509pop": {
+              "plugin_data": {
+                "private_key_path": "/sealed/key.pem",
+                "certificate_path": "/sealed/cert.pem"
+              }
+            }
+          }
+        ],
+        "WorkloadAttestor": [
+          {
+            "unix": {
+              "plugin_data": {}
+            }
+          }
+        ]
+      },
+      "telemetry": {
+        "Prometheus": {
+          "host": "0.0.0.0",
+          "port": "9402"
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spiffe-helper-config
+  namespace: zero-trust-workload-identity-manager
+data:
+  helper.conf: |-
+    agent_address = "/tmp/spire-agent/public/spire-agent.sock"
+    cmd = ""
+    cmd_args = ""
+    cert_dir = "/svids"
+    renew_signal = ""
+    svid_file_name = "svid.pem"
+    svid_key_file_name = "svid_key.pem"
+    svid_bundle_file_name = "svid_bundle.pem"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spire-agent-cc
+  namespace: zero-trust-workload-identity-manager
+  labels:
+    app: spire-agent-cc
+  annotations:
+    io.katacontainers.config.hypervisor.default_memory: "2048"
+    io.katacontainers.config.hypervisor.default_vcpus: "1"
+    io.katacontainers.config.runtime.cc_init_data: |
+      algorithm = "sha384"
+      version = "0.1.0"
+
+      [data]
+      "aa.toml" = '''
+      [token_configs]
+      [token_configs.coco_as]
+      url = 'https://kbs-le.apps.bleal-ztvp.azure.sandboxedcontainers.com'
+
+      [token_configs.kbs]
+      url = 'https://kbs-le.apps.bleal-ztvp.azure.sandboxedcontainers.com'
+      '''
+
+      "cdh.toml" = '''
+      socket = 'unix:///run/confidential-containers/cdh.sock'
+      credentials = []
+
+      [kbc]
+      name = 'cc_kbc'
+      url = 'https://kbs-le.apps.bleal-ztvp.azure.sandboxedcontainers.com'
+      '''
+spec:
+  runtimeClassName: kata-remote
+  shareProcessNamespace: true
+  serviceAccountName: spire-agent
+  nodeSelector:
+    workload-type: coco
+  imagePullSecrets:
+  - name: global-pull-secret
+  containers:
+  # SPIRE Agent Sidecar
+  - name: spire-agent
+    image: registry.redhat.io/zero-trust-workload-identity-manager/spiffe-spire-agent-rhel9@sha256:4073ef462525c2ea1326f3c44ec630e33cbab4b428e8314a85d38756c2460831
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        /spire-agent run -config /opt/spire/conf/agent/agent.conf
+    env:
+    - name: PATH
+      value: "/opt/spire/bin:/bin"
+    - name: MY_NODE_NAME
+      value: "coco-vm-node"  # Virtual node name for CoCo
+    ports:
+    - containerPort: 9982
+      name: healthz
+      protocol: TCP
+    livenessProbe:
+      httpGet:
+        path: /live
+        port: healthz
+        scheme: HTTP
+      initialDelaySeconds: 15
+      periodSeconds: 60
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: healthz
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    volumeMounts:
+    - name: spire-config
+      mountPath: /opt/spire/conf/agent
+      readOnly: true
+    - name: spire-bundle
+      mountPath: /run/spire/bundle
+      readOnly: true
+    - name: spire-socket
+      mountPath: /tmp/spire-agent/public
+    - name: spire-persistence
+      mountPath: /var/lib/spire
+    - name: sealed-creds
+      mountPath: /sealed
+    securityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+
+  # SPIFFE Helper Sidecar
+  - name: spiffe-helper
+    image: ghcr.io/spiffe/spiffe-helper:0.10.1
+    imagePullPolicy: IfNotPresent
+    args:
+      - "-config"
+      - "/etc/helper.conf"
+    volumeMounts:
+      - name: spiffe-helper-config
+        readOnly: true
+        mountPath: /etc/helper.conf
+        subPath: helper.conf
+      - name: spire-socket
+        readOnly: true
+        mountPath: /tmp/spire-agent/public
+      - name: svids
+        mountPath: /svids
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+      seccompProfile:
+        type: RuntimeDefault
+
+  # Test Workload Container
+  - name: test-workload
+    image: registry.redhat.io/ubi9/ubi-minimal:latest
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        echo "=== SPIRE Agent CoCo Test Started ==="
+        echo "Waiting for SPIFFE certificates..."
+
+        # Wait for SPIFFE certificates
+        while [ ! -f /svids/svid.pem ]; do
+          echo "Waiting for SPIFFE certificates..."
+          sleep 2
+        done
+
+        echo "SPIFFE certificates found!"
+        ls -la /svids/
+
+        echo "=== Testing SPIFFE X.509 certificates ==="
+        echo "Certificate details:"
+        openssl x509 -in /svids/svid.pem -text -noout | head -20
+
+        echo "=== Sleeping for manual inspection ==="
+        sleep 3600
+    volumeMounts:
+    - name: svids
+      mountPath: /svids
+      readOnly: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+      seccompProfile:
+        type: RuntimeDefault
+
+  volumes:
+  - name: spire-config
+    configMap:
+      name: spire-agent-coco
+  - name: spire-bundle
+    configMap:
+      name: spire-bundle
+  - name: spire-socket
+    emptyDir: {}
+  - name: spire-persistence
+    emptyDir: {}
+  - name: sealed-creds
+    secret:
+      secretName: test-sealed-spire
+  - name: svids
+    emptyDir: {}
+  - name: spiffe-helper-config
+    configMap:
+      name: spiffe-helper-config
