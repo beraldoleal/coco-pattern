@@ -1,7 +1,7 @@
 global:
   pattern: coco-pattern
   clusterPlatform: Azure
-  hubClusterDomain: apps.bleal-hub.azure.sandboxedcontainers.com
+  hubClusterDomain: apps.bleal-ztvp-hub.azure.sandboxedcontainers.com
   secretStore:
     # Warning: This must be present even if it is set to none.
     backend: vault # none, vault, kubernetes
@@ -14,8 +14,8 @@ global:
   # Defines whether or not the hub cluster can be used for confidential containers
   coco:
     azure:
-      defaultVMFlavour: "Standard_DC2as_v5"
-      VMFlavours: "Standard_DC2as_v5,Standard_DC4as_v5,Standard_DC8as_v5,Standard_DC16as_v5"
+      defaultVMFlavour: "Standard_DC2as_v6"
+      VMFlavours: "Standard_DC2as_v6,Standard_DC4as_v6,Standard_DC8as_v6,Standard_DC16as_v6"
 main:
   # WARNING
   # This default configuration uses a single cluster on azure.
