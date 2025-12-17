@@ -79,7 +79,7 @@ clusterGroup:
       project: trustee
       repoURL: https://github.com/butler54/trustee-chart.git
       targetRevision: merge-certs
-      path: /
+      path: ./
       # chart: trustee
       # chartVersion: 0.1.*
       # Use the override file to specify the list of secrets accessible to trustee from the ESO backend (today by default, Vault).
@@ -97,7 +97,7 @@ clusterGroup:
       project: sandbox
       repoURL: https://github.com/butler54/sandboxed-containers-chart.git
       targetRevision: remove-ssh
-      path: /
+      path: ./
 
     sandbox-policies:
       name: sandbox-policies
