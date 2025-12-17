@@ -77,23 +77,34 @@ clusterGroup:
       name: trustee
       namespace: trustee-operator-system #upstream config
       project: trustee
-      chart: trustee
-      chartVersion: 0.1.*
+      repoURL: https://github.com/butler54/trustee-chart.git
+      targetRevision: merge-certs
+      # chart: trustee
+      # chartVersion: 0.1.*
       # Use the override file to specify the list of secrets accessible to trustee from the ESO backend (today by default, Vault).
       extraValueFiles:
         - '$patternref/overrides/values-trustee.yaml'
+    # sandbox:
+    #   name: sandbox
+    #   namespace: openshift-sandboxed-containers-operator #upstream config
+    #   project: sandbox
+    #   chart: sandboxed-containers
+    #   chartVersion: 0.0.*
     sandbox:
       name: sandbox
       namespace: openshift-sandboxed-containers-operator #upstream config
       project: sandbox
-      chart: sandboxed-containers
-      chartVersion: 0.0.*
+      repoURL: https://github.com/butler54/sandboxed-containers-chart.git
+      targetRevision: remove-ssh
+
     sandbox-policies:
       name: sandbox-policies
       namespace: openshift-sandboxed-containers-operator #upstream config
       chart: sandboxed-policies
       chartVersion: 0.0.*
-
+#      path: applications/pipeline
+#      repoURL: https://github.com/you/applications.git
+#      targetRevision: stable
     # Letsencrypt is not required anymore for trustee.
     # It's only here if you need it for your needs.
     letsencrypt:
@@ -117,6 +128,11 @@ clusterGroup:
       project: workloads
       path: charts/coco-supported/kbs-access
 
+    tmp:
+      name: tmp
+      namespace: default
+      project: hub
+      path: charts/tmp
 
   imperative:
     # NOTE: We *must* use lists and not hashes. As hashes lose ordering once parsed by helm

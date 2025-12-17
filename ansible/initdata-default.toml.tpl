@@ -26,6 +26,10 @@ kbs_cert = """
 """
 '''
 
+[image]
+image_security_policy_uri = 'kbs:///default/security-policy/osc
+'''
+
 "policy.rego" = '''
 package agent_policy
 
@@ -36,7 +40,6 @@ default CopyFileRequest := true
 default CreateContainerRequest := true
 default CreateSandboxRequest := true
 default DestroySandboxRequest := true
-default ExecProcessRequest := false
 default GetMetricsRequest := true
 default GetOOMEventRequest := true
 default GuestDetailsRequest := true
@@ -52,7 +55,6 @@ default RemoveStaleVirtiofsShareMountsRequest := true
 default ReseedRandomDevRequest := true
 default ResumeContainerRequest := true
 default SetGuestDateTimeRequest := true
-default SetPolicyRequest := true
 default SignalProcessRequest := true
 default StartContainerRequest := true
 default StartTracingRequest := true
@@ -64,5 +66,20 @@ default UpdateEphemeralMountsRequest := true
 default UpdateInterfaceRequest := true
 default UpdateRoutesRequest := true
 default WaitProcessRequest := true
-default WriteStreamRequest := true
+default ExecProcessRequest := false
+default SetPolicyRequest := false
+default WriteStreamRequest := false
+
+ExecProcessRequest if {
+    input_command = concat(" ", input.process.Args)
+    some allowed_command in policy_data.allowed_commands
+    input_command == allowed_command
+}
+
+policy_data := {
+  "allowed_commands": [
+        "curl http://127.0.0.1:8006/cdh/resource/default/attestation-status/status",
+        "curl http://127.0.0.1:8006/cdh/resource/default/attestation-status/random"
+  ]
+}
 '''
