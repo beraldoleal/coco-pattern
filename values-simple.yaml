@@ -130,12 +130,6 @@ clusterGroup:
       project: workloads
       path: charts/coco-supported/kbs-access
 
-    tmp:
-      name: tmp
-      namespace: default
-      project: hub
-      path: charts/tmp
-
   imperative:
     # NOTE: We *must* use lists and not hashes. As hashes lose ordering once parsed by helm
     # The default schedule is every 10 minutes: imperative.schedule
