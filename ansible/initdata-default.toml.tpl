@@ -27,7 +27,7 @@ kbs_cert = """
 '''
 
 [image]
-image_security_policy_uri = 'kbs:///default/security-policy/osc
+image_security_policy_uri = 'kbs:///default/security-policy/{{ security_policy_flavour }}
 '''
 
 "policy.rego" = '''

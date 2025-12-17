@@ -80,11 +80,12 @@ clusterGroup:
       repoURL: https://github.com/butler54/trustee-chart.git
       targetRevision: merge-certs
       path: ./
+      extraValueFiles:
+        - '$patternref/overrides/values-trustee.yaml'
       # chart: trustee
       # chartVersion: 0.1.*
       # Use the override file to specify the list of secrets accessible to trustee from the ESO backend (today by default, Vault).
-      extraValueFiles:
-        - '$patternref/overrides/values-trustee.yaml'
+
     # sandbox:
     #   name: sandbox
     #   namespace: openshift-sandboxed-containers-operator #upstream config

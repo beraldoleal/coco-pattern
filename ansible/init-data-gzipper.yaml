@@ -7,6 +7,7 @@
     kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
     cluster_platform: "{{ global.clusterPlatform | default('none') | lower }}"
     hub_domain: "{{ global.hubClusterDomain | default('none')  | lower}}"
+    security_policy_flavour: "{{ global.coco.securityPolicyFlavour | default('insecure') }}"
     template_src: "initdata-default.toml.tpl"
   tasks:
     - name: Create temporary working directory
