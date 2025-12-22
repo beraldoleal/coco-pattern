@@ -24,10 +24,10 @@ url = "https://kbs.{{ hub_domain }}"
 kbs_cert = """ 
 {{ trustee_cert }}
 """
-'''
+
 
 [image]
-image_security_policy_uri = 'kbs:///default/security-policy/{{ security_policy_flavour }}
+image_security_policy_uri = 'kbs:///default/security-policy/{{ security_policy_flavour }}'
 '''
 
 "policy.rego" = '''
