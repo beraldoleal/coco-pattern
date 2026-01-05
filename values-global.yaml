@@ -12,6 +12,7 @@ global:
   # Defines whether or not the hub cluster can be used for confidential containers
   coco:
     securityPolicyFlavour: "insecure" # insecure, signed or reject is expected.
+    secured: true # true or false. If true, the cluster will be secured. If false, the cluster will be insecure.
     azure:
       defaultVMFlavour: "Standard_DC2as_v5"
       VMFlavours: "Standard_DC2as_v5,Standard_DC4as_v5,Standard_DC8as_v5,Standard_DC16as_v5"
