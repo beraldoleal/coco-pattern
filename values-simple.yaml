@@ -6,7 +6,6 @@ clusterGroup:
   # Override health check for Subscriptions to treat UpgradePending as healthy
   # Only applies to pinned CSV subscriptions (sandbox and trustee)
   namespaces:
-  - open-cluster-management
   - vault
   - golang-external-secrets
   - openshift-sandboxed-containers-operator
@@ -18,10 +17,6 @@ clusterGroup:
   - kbs-access
   - encrypted-storage
   subscriptions:
-    # ACM is kept anticipating 
-    acm:
-      name: advanced-cluster-management
-      namespace: open-cluster-management
     sandbox:
       name: sandboxed-containers-operator
       namespace: openshift-sandboxed-containers-operator
@@ -54,13 +49,6 @@ clusterGroup:
   sharedValueFiles:
   - '/overrides/values-{{ $.Values.global.clusterPlatform }}.yaml'
   applications:
-    acm:
-      name: acm
-      namespace: open-cluster-management
-      project: hub
-      chart: acm
-      chartVersion: 0.1.*
-
     vault:
       name: vault
       namespace: vault
